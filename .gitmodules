@@ -1,0 +1,4 @@
+[submodule "external/can_device_interface"]
+	url  = https://gitee.com/cptkkk/can_device_interface
+	path = external/can_device_interface
+
