@@ -11,17 +11,21 @@
 
 #include <ros/ros.h>
 
-#include "USVPod.h"
+#include "USVMotor.h"
 
 int main(int argc, char** argv){
     // 初始化 ROS 节点
-    ros::init(argc, argv, "usv_pod_driver_node");
+    ros::init(argc, argv, "usv_motor_driver_node");
     ros::NodeHandle nh("~");
     ros::Rate rate(10);
 
+    std::string can_interface;
+    nh.getParam("can_interface", can_interface);
+
     try {
-        // 启动 USVPod CAN-ROS driver
-        USVPod usv_pod(&nh, 1000.0);
+        ROS_INFO("Starting USV Motor CAN<->ROS driver on %s...", can_interface.c_str());
+        USVMotor motor(&nh, can_interface);
+        ROS_INFO("Started.");
 
         while(nh.ok()) {
             rate.sleep();

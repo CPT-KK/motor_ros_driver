@@ -3,7 +3,7 @@
     <arg name="can_interface" default="vcan0"/>
 
     <!-- Node definition -->
-    <node pkg="pod_ros_driver" type="pod_ros_driver" name="pod_ros_driver" output="screen">
+    <node pkg="motor_ros_driver" type="motor_ros_driver" name="motor_ros_driver" output="screen">
         <!-- Pass the can_interface argument as a parameter to the node -->
         <param name="~can_interface" value="$(arg can_interface)" />
     </node>
