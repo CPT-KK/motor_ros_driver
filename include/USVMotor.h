@@ -136,7 +136,7 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
 
     // Set the 2nd and 3rd byte of CAN frame payload to motor rpm
     // Note: RPM needs to be divided by 4 to [-250, 250]
-    *((int16_t*)(payload + 1)) = msg->data / 4;
+    *((int16_t*)(payload + 1)) = raw_rpm / 4;
 
     // Send CAN frame
     torq_both.send(payload, 3);
