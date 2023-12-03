@@ -58,7 +58,7 @@ class USVMotor {
     void pod_angle_setpoint_ros_to_can(const std_msgs::Float32::ConstPtr& msg, const unsigned int idx);
 
     void decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_gear);
-    void decode_pod_ange(const can_frame& frame, double& current_position);
+    void decode_pod_angle(const can_frame& frame, double& current_position);
 };
 
 USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : 
@@ -147,7 +147,7 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
 void USVMotor::pod_angle_estimate_can_to_ros(const can_frame& frame, const unsigned int idx) {
     // Decode CAN frame from left or right pod
     double current_position;
-    decode_pod_ange(frame, current_position);
+    decode_pod_angle(frame, current_position);
 
     // See which pod is this CAN frame from, and publish the angle data
     switch (idx) {
@@ -203,7 +203,7 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	register uint64_t x;
 	register uint64_t i = *(uint64_t *)(frame.data);
 	if (frame.can_dlc < 8)
-		return;
+		throw std::runtime_error("CAN frame data length is not enough.");
 
     /* engine_speed: start-bit 24, length 16, endianess intel, scaling 0.25, offset 0 */
 	x = (i >> 24) & 0xffff;
@@ -234,11 +234,11 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	motor_gear = (int)x - 0x7D;
 }
 
-void USVMotor::decode_pod_ange(const can_frame& frame, double& current_position) {
+void USVMotor::decode_pod_angle(const can_frame& frame, double& current_position) {
 	register uint64_t x;
 	register uint64_t i = *(uint64_t *)(frame.data);
 	if (frame.can_dlc < 6)
-		return;
+		throw std::runtime_error("CAN frame data length is not enough.");
 
 	/* current_position: start-bit 0, length 32, endianess intel, scaling 0.002, offset 0 */
 	x = i & 0xffffffff;
