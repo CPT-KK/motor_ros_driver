@@ -85,6 +85,7 @@ USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : _nh
 }
 
 USVMotor::~USVMotor() {
+    ROS_INFO("Closing CAN<->ROS instances...");
     return;
 }
 

@@ -28,7 +28,8 @@ int main(int argc, char** argv){
         ROS_INFO("All done. USV Motor CAN<->ROS driver started.");
 
         while(nh.ok()) {
-            ros::spin();
+            rate.sleep();
+            ros::spinOnce();
         }
     } catch(const std::exception& e) {
         std::cerr << "[Exception detected] " << e.what() << std::endl;
