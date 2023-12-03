@@ -31,10 +31,6 @@ class USVMotor {
     // static const int pod_right_send_id = 0x383;
     // static const int pod_right_recv_id = 0x603;
 
-    // CAN2ROS 线程
-    std::thread _can_thread;
-    bool _is_running = true;
-
     ros::NodeHandle _nh;
 
     ros::Publisher pod_left_estimate_pub;
@@ -61,13 +57,12 @@ class USVMotor {
     void decode_pod_angle(const can_frame& frame, double& current_position);
 };
 
-USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : 
-    _nh(*nodehandle), 
+USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : _nh(*nodehandle), 
     torq_both(can_interface.c_str(), 0x00000A05, boost::bind(&USVMotor::torqeedo_estimate_can_to_ros, this, _1), 0x00000A02), 
     pod_left(can_interface.c_str(), 0x384, boost::bind(&USVMotor::pod_angle_estimate_can_to_ros, this, _1, 0x04), 0x604), 
     pod_right(can_interface.c_str(), 0x383, boost::bind(&USVMotor::pod_angle_estimate_can_to_ros, this, _1, 0x03), 0x603) {
 
-    // 创建 ROS 发布与订阅
+    // Create ROS publishers and subscribers
     torq_left_estimate_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/left/estimate", 1);
     torq_right_estimate_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/right/estimate", 1);
     torq_left_setpoint_sub = _nh.subscribe<std_msgs::Int16>("/usv/torqeedo/left/setpoint", 10, boost::bind(&USVMotor::torqeedo_setpoint_ros_to_can, this, _1, 0x02));
@@ -79,10 +74,14 @@ USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) :
     pod_right_setpoint_sub = _nh.subscribe<std_msgs::Float32>("/usv/pod/right/setpoint", 10, boost::bind(&USVMotor::pod_angle_setpoint_ros_to_can, this, _1, 0x03));
 
     // Start to read from devices
+    ROS_INFO("Starting CAN<->ROS instances for torqeedos...");
     torq_both.read();
+
+    ROS_INFO("Starting CAN<->ROS instances for pods...");
     pod_left.read();
     pod_right.read();
 
+    return;
 }
 
 USVMotor::~USVMotor() {
@@ -232,6 +231,8 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	/* motor_gear: start-bit 56, length 8, endianess intel, scaling 1, offset -125 */
 	x = (i >> 56) & 0xff;
 	motor_gear = (int)x - 0x7D;
+
+    return;
 }
 
 void USVMotor::decode_pod_angle(const can_frame& frame, double& current_position) {

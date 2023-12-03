@@ -25,11 +25,10 @@ int main(int argc, char** argv){
     try {
         ROS_INFO("Starting USV Motor CAN<->ROS driver on %s...", can_interface.c_str());
         USVMotor motor(&nh, can_interface);
-        ROS_INFO("Started.");
+        ROS_INFO("All done. USV Motor CAN<->ROS driver started.");
 
         while(nh.ok()) {
-            rate.sleep();
-            ros::spinOnce();
+            ros::spin();
         }
     } catch(const std::exception& e) {
         std::cerr << "[Exception detected] " << e.what() << std::endl;
