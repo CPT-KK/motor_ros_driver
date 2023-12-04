@@ -123,10 +123,10 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
         raw_rpm = raw_rpm / abs(raw_rpm) * 1000;
     }
 
-    if (raw_rpm > -30 && raw_rpm < 30) {
+    if (raw_rpm > -80 && raw_rpm < 80) {
         ROS_WARN("Setpoint %d rpm for torqeedo 0x%X is too small to trigger an action.", raw_rpm, idx);
         if (raw_rpm != 0) {
-            raw_rpm = raw_rpm / abs(raw_rpm) * 30;
+            raw_rpm = raw_rpm / abs(raw_rpm) * 80;
         }  
     }
 
