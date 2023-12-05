@@ -123,10 +123,10 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
         raw_rpm = raw_rpm / abs(raw_rpm) * 1000;
     }
 
-    if (raw_rpm > -80 && raw_rpm < 80) {
+    if (raw_rpm > -50 && raw_rpm < 50) {
         ROS_WARN("Setpoint %d rpm for torqeedo 0x%X is too small to trigger an action.", raw_rpm, idx);
         if (raw_rpm != 0) {
-            raw_rpm = raw_rpm / abs(raw_rpm) * 80;
+            raw_rpm = raw_rpm / abs(raw_rpm) * 50;
         }  
     }
 
@@ -192,8 +192,10 @@ void USVMotor::pod_angle_setpoint_ros_to_can(const std_msgs::Float32::ConstPtr& 
     switch (idx) {
         case 0x04:
             pod_left.send(payload, 8);
+            break;
         case 0x03:
             pod_right.send(payload, 8);
+            break;
         default:
             break;
     }
@@ -216,19 +218,19 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	motor_index = (int)x;
 
 	/* valid_check: start-bit 8, length 8, endianess intel, scaling 1, offset 0 */
-	x = (i >> 8) & 0xff;
+	// x = (i >> 8) & 0xff;
 	// uint8_t valid_check = (uint8_t)x;
 
 	/* motor_status: start-bit 16, length 8, endianess intel, scaling 1, offset 0 */
-	x = (i >> 16) & 0xff;
+	// x = (i >> 16) & 0xff;
 	// uint8_t motor_status = (uint8_t)x;
 
 	/* motor_torque: start-bit 40, length 8, endianess intel, scaling 1, offset 0 */
-	x = (i >> 40) & 0xff;
+	// x = (i >> 40) & 0xff;
 	// uint8_t motor_torque = (uint8_t)x;
 
 	/* motor_throttle: start-bit 48, length 8, endianess intel, scaling 1, offset 0 */
-	x = (i >> 48) & 0xff;
+	// x = (i >> 48) & 0xff;
 	// uint8_t motor_throttle = (uint8_t)x;
 
 	/* motor_gear: start-bit 56, length 8, endianess intel, scaling 1, offset -125 */
