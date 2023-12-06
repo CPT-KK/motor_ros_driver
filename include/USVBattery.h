@@ -46,6 +46,12 @@ USVBattery::USVBattery(ros::NodeHandle* nodehandle, std::string can_interface) :
         battery_cell_state[i]->read();
     }
 
+    // 创建 ROS 发布与订阅
+    battery_soc_pub = _nh.advertise<std_msgs::Float32MultiArray>("/usv/battery/soc", 10);
+    battery_min_cell_volt_pub = _nh.advertise<std_msgs::Float32MultiArray>("/usv/battery/min_cell_volt", 10);
+    battery_soc.data.reserve(2);
+    battery_min_cell_volt.data.reserve(2);
+
     polling_thread_ = std::thread(&USVBattery::battery_polling_can, this);
 
     ROS_INFO("USV battery CAN-ROS driver stared.");
