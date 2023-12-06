@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 
 #include "USVMotor.h"
+#include "USVBattery.h"
 
 int main(int argc, char** argv){
     // 初始化 ROS 节点
@@ -25,6 +26,7 @@ int main(int argc, char** argv){
     try {
         ROS_INFO("Starting USV Motor CAN<->ROS driver on %s...", can_interface.c_str());
         USVMotor motor(&nh, can_interface);
+        // USVBattery battery(&nh, can_interface);
         ROS_INFO("All done. USV Motor CAN<->ROS driver started.");
 
         while(nh.ok()) {
