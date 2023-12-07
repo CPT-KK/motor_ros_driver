@@ -39,8 +39,8 @@ class USVBattery {
 
 USVBattery::USVBattery(ros::NodeHandle* nodehandle, std::string can_interface) : _nh(*nodehandle), stopThread_(false) {
     for (int i = 0; i < 4; i++) {
-        battery_overall_state[i] = std::make_shared<CANDevice>(can_interface.c_str(), 0x18904001 + i, boost::bind(&USVBattery::overall_state_can_to_ros, this, _1, i), 0x18900140 + i);
-        battery_cell_state[i] = std::make_shared<CANDevice>(can_interface.c_str(), 0x18914001 + i, boost::bind(&USVBattery::cell_state_can_to_ros, this, _1, i), 0x18910140 + i);
+        battery_overall_state[i] = std::make_shared<CANDevice>(can_interface.c_str(), 0x18904001 + i, boost::bind(&USVBattery::overall_state_can_to_ros, this, _1, i), 0x18900140 + (i << 8));
+        battery_cell_state[i] = std::make_shared<CANDevice>(can_interface.c_str(), 0x18914001 + i, boost::bind(&USVBattery::cell_state_can_to_ros, this, _1, i), 0x18910140 + (i << 8));
 
         battery_overall_state[i]->read();
         battery_cell_state[i]->read();
@@ -98,7 +98,7 @@ void USVBattery::cell_state_can_to_ros(const can_frame& frame, int batt_idx) {
 
 void USVBattery::battery_polling_can() {
     int i = 0;
-    ros::Rate _rate(5);
+    ros::Rate _rate(10);
     uint8_t payload[8];
     memset(payload, 0, sizeof(payload));
 

@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv){
     // 初始化 ROS 节点
-    ros::init(argc, argv, "usv_motor_driver_node");
+    ros::init(argc, argv, "usv_driver_node");
     ros::NodeHandle nh("~");
     ros::Rate rate(10);
 
@@ -24,10 +24,10 @@ int main(int argc, char** argv){
     nh.getParam("can_interface", can_interface);
 
     try {
-        ROS_INFO("Starting USV Motor CAN<->ROS driver on %s...", can_interface.c_str());
+        ROS_INFO("Starting USV CAN<->ROS driver on %s...", can_interface.c_str());
         USVMotor motor(&nh, can_interface);
-        // USVBattery battery(&nh, can_interface);
-        ROS_INFO("All done. USV Motor CAN<->ROS driver started.");
+        USVBattery battery(&nh, can_interface);
+        ROS_INFO("All done. USV CAN<->ROS driver started.");
 
         while(nh.ok()) {
             rate.sleep();
