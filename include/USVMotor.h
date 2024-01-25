@@ -165,10 +165,10 @@ void USVMotor::pod_angle_setpoint_ros_to_can(const std_msgs::Float32::ConstPtr& 
     // Input angle must multiply 500 to get the raw angle value for the pod
     int32_t raw_angle = (int32_t)(msg->data * 500.0);
 
-    // Angle limitation [-95, 95] -> [-47500, 47500]
-    if (raw_angle > 47500 || raw_angle < -47500) {
+    // Angle limitation [-96, 96] -> [-48000, 48000]
+    if (raw_angle > 48000 || raw_angle < -48000) {
         ROS_WARN("Setpoint %d deg for pod 0x%X not in [-95, 95] deg.", (int32_t)msg->data, idx);
-        raw_angle = (raw_angle >= 0) ? 47500 : -47500;
+        raw_angle = (raw_angle >= 0) ? 48000 : -48000;
     }
 
     // CAN frame payload for pod
