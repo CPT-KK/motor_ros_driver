@@ -142,10 +142,10 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
     // Set the 2nd and 3rd byte of CAN frame payload to motor rpm
     // Note: RPM needs to be divided by 4 to [-250, 250]
     // If the motor status is not E5, send full zero command to try to restart the motor
-    if (motor_status_both[idx-1] != 0xE5){
-        *((int16_t*)(payload + 1)) = 0;
-    } else {
+    if (motor_status_both[0] == 0xE5 && motor_status_both[1] == 0xE5) {
         *((int16_t*)(payload + 1)) = raw_rpm / 4;
+    } else {
+        *((int16_t*)(payload + 1)) = 0;
     }
     
 
