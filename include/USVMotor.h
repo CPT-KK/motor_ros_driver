@@ -46,8 +46,10 @@ class USVMotor {
     void pod_angle_estimate_can_to_ros(const can_frame& frame, const unsigned int idx);
     void pod_angle_setpoint_ros_to_can(const std_msgs::Float32::ConstPtr& msg, const unsigned int idx);
 
-    void decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_gear);
+    void decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_status, int& motor_gear);
     void decode_pod_angle(const can_frame& frame, double& current_position);
+
+    int motor_status_both[2];
 };
 
 USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : _nh(*nodehandle), 
@@ -84,20 +86,22 @@ USVMotor::~USVMotor() {
 
 void USVMotor::torqeedo_estimate_can_to_ros(const can_frame& frame) {
     // Decode CAN frame from torqeedo
-    int motor_index, motor_gear;
+    int motor_index, motor_status, motor_gear;
     double rpm_data;
-    decode_motor_state(frame, rpm_data, motor_index, motor_gear);
+    decode_motor_state(frame, rpm_data, motor_index, motor_status, motor_gear);
     rpm_data = rpm_data * static_cast<double>(motor_gear);
-
+    
     // See this CAN frame is for which motor, and publish the rpm data
     switch ((int)motor_index) {
         case 0x02:
             torq_left_rpm.data = static_cast<int16_t>(rpm_data);
             torq_left_estimate_pub.publish(torq_left_rpm);
+            motor_status_both[1] = motor_status;
             break;
         case 0x01:
             torq_right_rpm.data = static_cast<int16_t>(rpm_data);
             torq_right_estimate_pub.publish(torq_right_rpm);
+            motor_status_both[0] = motor_status;
             break;
         default:
             break;
@@ -118,9 +122,11 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
 
     if (raw_rpm > -50 && raw_rpm < 50) {
         ROS_WARN("Setpoint %d rpm for torqeedo 0x%X is too small to trigger an action.", raw_rpm, idx);
-        if (raw_rpm != 0) {
+        if (abs(raw_rpm) > 5) {
             raw_rpm = raw_rpm / abs(raw_rpm) * 50;
-        }  
+        } else {
+            raw_rpm = 0;
+        }
     }
 
     // CAN frame payload for torqeedo
@@ -131,7 +137,13 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
 
     // Set the 2nd and 3rd byte of CAN frame payload to motor rpm
     // Note: RPM needs to be divided by 4 to [-250, 250]
-    *((int16_t*)(payload + 1)) = raw_rpm / 4;
+    // If the motor status is not E5, send full zero command to try to restart the motor
+    if (motor_status_both[idx-1] != 0xE5){
+        *((int16_t*)(payload + 1)) = 0;
+    } else {
+        *((int16_t*)(payload + 1)) = raw_rpm / 4;
+    }
+    
 
     // Send CAN frame
     torq_both.send(payload, 3);
@@ -196,7 +208,7 @@ void USVMotor::pod_angle_setpoint_ros_to_can(const std_msgs::Float32::ConstPtr& 
     return;
 }
 
-void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_gear) {
+void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_status, int& motor_gear) {
 	register uint64_t x;
 	register uint64_t i = *(uint64_t *)(frame.data);
 	if (frame.can_dlc < 8)
@@ -215,8 +227,8 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	// uint8_t valid_check = (uint8_t)x;
 
 	/* motor_status: start-bit 16, length 8, endianess intel, scaling 1, offset 0 */
-	// x = (i >> 16) & 0xff;
-	// uint8_t motor_status = (uint8_t)x;
+	x = (i >> 16) & 0xff;
+	motor_status = (int)x;
 
 	/* motor_torque: start-bit 40, length 8, endianess intel, scaling 1, offset 0 */
 	// x = (i >> 40) & 0xff;
