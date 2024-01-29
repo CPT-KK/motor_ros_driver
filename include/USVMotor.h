@@ -35,6 +35,8 @@ class USVMotor {
 
     ros::Publisher torq_left_estimate_pub;
     ros::Publisher torq_right_estimate_pub;
+    ros::Publisher torq_left_status_pub;
+    ros::Publisher torq_right_status_pub;
     ros::Subscriber torq_left_setpoint_sub;
     ros::Subscriber torq_right_setpoint_sub;
     std_msgs::Int16 torq_left_rpm;
@@ -60,6 +62,8 @@ USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : _nh
     // Create ROS publishers and subscribers
     torq_left_estimate_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/left/estimate", 1);
     torq_right_estimate_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/right/estimate", 1);
+    torq_left_status_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/left/status", 1);
+    torq_right_status_pub = _nh.advertise<std_msgs::Int16>("/usv/torqeedo/right/status", 1);
     torq_left_setpoint_sub = _nh.subscribe<std_msgs::Int16>("/usv/torqeedo/left/setpoint", 10, boost::bind(&USVMotor::torqeedo_setpoint_ros_to_can, this, _1, 0x02));
     torq_right_setpoint_sub = _nh.subscribe<std_msgs::Int16>("/usv/torqeedo/right/setpoint", 10, boost::bind(&USVMotor::torqeedo_setpoint_ros_to_can, this, _1, 0x01));
 
@@ -90,18 +94,18 @@ void USVMotor::torqeedo_estimate_can_to_ros(const can_frame& frame) {
     double rpm_data;
     decode_motor_state(frame, rpm_data, motor_index, motor_status, motor_gear);
     rpm_data = rpm_data * static_cast<double>(motor_gear);
-    
+    motor_status_both[motor_index-1] = motor_status;
     // See this CAN frame is for which motor, and publish the rpm data
-    switch ((int)motor_index) {
+    switch (motor_index) {
         case 0x02:
             torq_left_rpm.data = static_cast<int16_t>(rpm_data);
-            torq_left_estimate_pub.publish(torq_left_rpm);
-            motor_status_both[1] = motor_status;
+            torq_left_estimate_pub.publish(torq_left_rpm);       
+            torq_left_status_pub.publish(motor_status);
             break;
         case 0x01:
             torq_right_rpm.data = static_cast<int16_t>(rpm_data);
             torq_right_estimate_pub.publish(torq_right_rpm);
-            motor_status_both[0] = motor_status;
+            torq_right_status_pub.publish(motor_status);
             break;
         default:
             break;
