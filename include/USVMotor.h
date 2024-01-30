@@ -41,6 +41,8 @@ class USVMotor {
     ros::Subscriber torq_right_setpoint_sub;
     std_msgs::Int16 torq_left_rpm;
     std_msgs::Int16 torq_right_rpm;
+    std_msgs::Int16 torq_left_status;
+    std_msgs::Int16 torq_right_status;
 
     void torqeedo_estimate_can_to_ros(const can_frame& frame);
     void torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg, const unsigned int idx);
@@ -97,13 +99,15 @@ void USVMotor::torqeedo_estimate_can_to_ros(const can_frame& frame) {
     switch (motor_index) {
         case 0x02:
             torq_left_rpm.data = static_cast<int16_t>(rpm_data);
-            torq_left_estimate_pub.publish(torq_left_rpm);       
-            torq_left_status_pub.publish(motor_status);
+            torq_left_estimate_pub.publish(torq_left_rpm);
+            torq_left_status.data = static_cast<int16_t>(motor_status);
+            torq_left_status_pub.publish(torq_left_status);
             break;
         case 0x01:
             torq_right_rpm.data = static_cast<int16_t>(rpm_data);
             torq_right_estimate_pub.publish(torq_right_rpm);
-            torq_right_status_pub.publish(motor_status);
+            torq_right_status.data = static_cast<int16_t>(motor_status);
+            torq_right_status_pub.publish(torq_right_status);
             break;
         default:
             break;
