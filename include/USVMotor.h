@@ -51,7 +51,6 @@ class USVMotor {
     void decode_motor_state(const can_frame& frame, double& engine_speed, int& motor_index, int& motor_status, int& motor_gear);
     void decode_pod_angle(const can_frame& frame, double& current_position);
 
-    int motor_status_both[2];
 };
 
 USVMotor::USVMotor(ros::NodeHandle* nodehandle, std::string can_interface) : _nh(*nodehandle), 
@@ -94,7 +93,6 @@ void USVMotor::torqeedo_estimate_can_to_ros(const can_frame& frame) {
     double rpm_data;
     decode_motor_state(frame, rpm_data, motor_index, motor_status, motor_gear);
     rpm_data = rpm_data * static_cast<double>(motor_gear);
-    motor_status_both[motor_index-1] = motor_status;
     // See this CAN frame is for which motor, and publish the rpm data
     switch (motor_index) {
         case 0x02:
@@ -142,12 +140,7 @@ void USVMotor::torqeedo_setpoint_ros_to_can(const std_msgs::Int16::ConstPtr& msg
     // Set the 2nd and 3rd byte of CAN frame payload to motor rpm
     // Note: RPM needs to be divided by 4 to [-250, 250]
     // If the motor status is not E5, send full zero command to try to restart the motor
-    if (motor_status_both[0] == 0xE5 && motor_status_both[1] == 0xE5) {
-        *((int16_t*)(payload + 1)) = raw_rpm / 4;
-    } else {
-        *((int16_t*)(payload + 1)) = 0;
-    }
-    
+    *((int16_t*)(payload + 1)) = raw_rpm / 4;  
 
     // Send CAN frame
     torq_both.send(payload, 3);
@@ -233,6 +226,13 @@ void USVMotor::decode_motor_state(const can_frame& frame, double& engine_speed, 
 	/* motor_status: start-bit 16, length 8, endianess intel, scaling 1, offset 0 */
 	x = (i >> 16) & 0xff;
 	motor_status = (int)x;
+    // int drive_enable = (int)x & 0b00000001;
+    // int charger_present = (int)x & 0b00000010;
+    // int no_kill_switch = (int)x & 0b00001100;
+    // int battery_connected = (int)x & 0b00010000;
+    // int throttle_ready = (int)x & 0b00100000;
+    // int master_ready = (int)x & 0b01000000;
+    // int drive_ready  = (int)x & 0b10000000;
 
 	/* motor_torque: start-bit 40, length 8, endianess intel, scaling 1, offset 0 */
 	// x = (i >> 40) & 0xff;
